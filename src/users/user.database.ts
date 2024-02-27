@@ -57,11 +57,11 @@ export const create = async (userData: UnitUser): Promise<UnitUser | null> => {
     return user;
 }
 
-export const findByEmail = async (user_email: string): Promise<null | UnitUser> => {
+export const findByEmail2 = async (user_email: string): Promise<UnitUser | null> => {
 
     const allUsers = await findAll();
 
-    const getUser = allUsers.find(result => user_email === result.email);
+    const getUser = allUsers.find(result => result.email.includes(user_email));
 
     if(!getUser){
         return null;
@@ -70,9 +70,40 @@ export const findByEmail = async (user_email: string): Promise<null | UnitUser> 
     return getUser;
 }
 
+export const findByEmail = async (user_email: string): Promise<UnitUser[] | null> => {
+
+    const allUsers = await findAll();
+    const getUsers = allUsers.filter(user => user.email.includes(user_email));
+    if (getUsers.length === 0) {
+        return null;
+    }
+    return getUsers;
+}
+
+export const findByUserName = async (username: string): Promise<UnitUser[] | null> => {
+
+    const allUsers = await findAll();
+    const getUsers = allUsers.filter(user => user.username.includes(username));
+    if (getUsers.length === 0) {
+        return null;
+    }
+    return getUsers;
+}
+
+export const findByEmailAndUsername = async (user_email: string, username: string): Promise<UnitUser[] | null> => {
+
+    const allUsers = await findAll();
+
+    const getUsers = allUsers.filter(user => user.email.includes(user_email) && user.username.includes(username));
+    if (getUsers.length === 0) {
+        return null;
+    }
+    return getUsers;
+}
+
 export const compassPassword = async(email : string, supplied_password : string): Promise<null | UnitUser> => {
 
-    const user = await findByEmail(email)
+    const user = await findByEmail2(email)
 
     const decryptPassword = await bcrypt.compare(supplied_password, user!.password)
 
@@ -112,7 +143,7 @@ export const update = async(id: string, updateValues: User): Promise<UnitUser | 
 export const remove = async(id: string): Promise<null | void> => {
 
     const user = await findOne(id)
-
+ 
     if(!user){
         return null
     }
