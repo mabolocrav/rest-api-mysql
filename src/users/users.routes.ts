@@ -22,7 +22,7 @@ userRouter.get("/users", async (req : Request, res : Response) => {
 userRouter.get("/user/:id", async (req : Request, res : Response) => {
 
     try{
-        const user : UnitUser = await database.findOne(req.params.id)
+        const user = await database.findById(req.params.id)
 
         if(!user){
             return res.status(StatusCodes.NOT_FOUND).json({error : `User not found!`})
@@ -48,12 +48,13 @@ userRouter.post("/register", async(req : Request, res : Response) => {
             return res.status(StatusCodes.NOT_FOUND).json({error : `This email has already been taken`})
         }
 
-        const newUser = await database.create(req.body)
+        const newUser = await database.createUser(req.body)
         
 
         
         return res.status(StatusCodes.CREATED).json({newUser})
     }catch(error){
+        console.log(error); 
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({error})
     }
 })
@@ -88,7 +89,7 @@ userRouter.put('/user/:id', async (req: Request, res: Response) => {
     try{
         const {username, email, password} = req.body
         
-        const getUser = await database.findOne(req.params.id)
+        const getUser = await database.findById(req.params.id)
 
         if(!username || !email || !password){
             return res.status(401).json({error : `Please provide all the required parameters`})
@@ -112,7 +113,7 @@ userRouter.delete('/user/:id', async (req: Request, res: Response) => {
     try{
        const id = (req.params.id)
 
-       const user = await database.findOne(id)
+       const user = await database.findById(id)
 
        if(!user){
             return res.status(StatusCodes.NOT_FOUND).json({error : `User does not exist`})
@@ -125,6 +126,43 @@ userRouter.delete('/user/:id', async (req: Request, res: Response) => {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({error})
     }
 })
+
+userRouter.get("/users/search", async (req: Request<{},{},{},{name?: string, email?: string}>, res: Response) => {
+    try {
+        const { name, email } = req.query;
+
+        if(!name && !email){
+            const allUsers: UnitUser[] = await database.findAll();
+            if (!allUsers || allUsers.length === 0) {
+                return res.status(StatusCodes.NOT_FOUND).json({ msg: `No users at this time..` });
+            }
+            return res.status(StatusCodes.OK).json({ total_user: allUsers.length, allUsers });
+        }
+        if(name && email){
+            const user = await database.findByEmailAndUsername(email, name);
+            if (!user) {
+                return res.status(StatusCodes.NOT_FOUND).json([]);
+            }
+            return res.status(StatusCodes.OK).json({user});
+        }
+
+        if (name) {
+            const users = await database.findAllByUsername(name);
+            if (!users) {
+                return res.status(StatusCodes.NOT_FOUND).json([]);
+            }
+            return res.status(StatusCodes.OK).json({ users });
+        } else if (email) {
+            const users = await database.findAllByEmail(email);
+            if (!users) {
+                return res.status(StatusCodes.NOT_FOUND).json([]);
+            }
+            return res.status(StatusCodes.OK).json({ users });
+        } 
+    } catch (error) {
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error });
+    }
+});
 
 // userRouter.get("/users/search", async (req : Request<{},{},{},{email?: string, name?: string}>, res : Response) => {
 //     try{
@@ -241,7 +279,7 @@ userRouter.get("/users/search", async (req: Request<{},{},{},{name?: string, ema
         }
 
         if (name) {
-            const user = await database.findByUserName(name);
+            const user = await database.findAllByUsername(name);
             if (!user) {
                 return res.status(StatusCodes.NOT_FOUND).json([]);
             }

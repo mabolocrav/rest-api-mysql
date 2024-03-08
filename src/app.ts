@@ -4,7 +4,7 @@ import cors from "cors"
 import helmet from "helmet"
 import { userRouter } from "./users/users.routes"
 import { productRouter } from "./products/product.routes"
-
+import mysql from "mysql"
 
 dotevnv.config()
 
