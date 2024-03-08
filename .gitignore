@@ -1,0 +1,3 @@
+.gitigore
+/node_modules
+.env
